@@ -2,13 +2,13 @@ package ru.tsystems.phoenix.qa.selenium.tests;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.PageFactory;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.Test;
 import ru.tsystems.phoenix.qa.selenium.AbstractBaseSeleniumTest;
 import ru.tsystems.phoenix.qa.selenium.Locators;
-
-import java.util.concurrent.TimeUnit;
+import ru.tsystems.phoenix.qa.selenium.page.BadLoginPage;
+import ru.yandex.qatools.htmlelements.matchers.WebElementMatchers;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -23,17 +23,37 @@ public class LoginTest extends AbstractBaseSeleniumTest {
     @Test
     public void testLogin() {
         webDriver.get(START_PAGE_URL);
-        var title = webDriver.findElement(By.cssSelector("h3")).getText();
+
+        var title = onLoginPage().title().getText();
         assertThat("Intra Login page is not open", title, is("Добро пожаловать в Intra"));
 
-        var userNameInput = webDriver.findElement(Locators.USERNAME_INPUT_LOCATOR);
-        userNameInput.sendKeys(USERNAME);
+        onLoginPage().usernameInput()
+                .should("Username is nof found on Login Page", WebElementMatchers.exists())
+                .sendKeys(USERNAME);
+        onLoginPage().passwordInput().should(WebElementMatchers.exists()).sendKeys(PASSWORD);
 
-        var passwordInput = webDriver.findElement(Locators.PASSWORD_INPUT_LOCATOR);
-        passwordInput.sendKeys(PASSWORD);
+        onLoginPage().loginButton().should(WebElementMatchers.isEnabled()).click();
 
-        var loginButton = webDriver.findElement(Locators.LOGIN_BUTTON_LOCATOR);
-        loginButton.click();
+        var currentUrl = webDriver.getCurrentUrl();
+        assertThat("Redirect or login is not working properly", currentUrl, is(START_PAGE_URL));
+
+        var megabyteText = onDashPage().megabyteText().waitUntil(WebElementMatchers.exists()).getText();
+
+        var megabyte = Integer.parseInt(megabyteText);
+        assertThat(megabyte, is(greaterThan(100)));
+
+    }
+    @Test
+    public void testLoginWithPage() {
+        webDriver.get(START_PAGE_URL);
+
+        var loginPage = PageFactory.initElements(webDriver, BadLoginPage.class);
+        var title = loginPage.getTitleTextBlock().getText();
+        assertThat("Intra Login page is not open", title, is("Добро пожаловать в Intra"));
+
+        loginPage.login(USERNAME, PASSWORD);
+
+        pause();
 
         var currentUrl = webDriver.getCurrentUrl();
         assertThat("Redirect or login is not working properly", currentUrl, is(START_PAGE_URL));
@@ -43,6 +63,5 @@ public class LoginTest extends AbstractBaseSeleniumTest {
         WebElement megabyteTextBlock = wait.until(presenceOfElementLocated(Locators.MEGABYTE_TEXT_LOCATOR));
         var megabyte = Integer.parseInt(megabyteTextBlock.getText());
         assertThat(megabyte, is(greaterThan(100)));
-
     }
 }
