@@ -12,11 +12,12 @@ import ru.tsystems.phoenix.qa.selenium.page.LoginPage;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public abstract class AbstractBaseSeleniumTest {
-    protected WebDriver webDriver;
+    public static ThreadLocal<WebDriver> webDriver = ThreadLocal.withInitial(() -> null);
     protected Atlas atlas;
 
     private static final URL HUB_URL;
@@ -31,18 +32,24 @@ public abstract class AbstractBaseSeleniumTest {
         }
     }
 
+    protected WebDriver getDriver() {
+        return webDriver.get();
+    }
+
     @BeforeMethod
     public void initWebDriver() {
         var chromeOptions = new ChromeOptions();
         chromeOptions.addArguments("start-maximized");
-        webDriver = new RemoteWebDriver(HUB_URL, chromeOptions);
-        atlas = new Atlas(new WebDriverConfiguration(webDriver));
+        webDriver.set(new RemoteWebDriver(HUB_URL, chromeOptions));
+        atlas = new Atlas(new WebDriverConfiguration(getDriver()));
+        getDriver().manage().timeouts().implicitlyWait(20, SECONDS);
+        getDriver().manage().timeouts().pageLoadTimeout(60, SECONDS);
     }
 
     @AfterMethod
     public void closeWebDriver() {
-        if (webDriver != null) {
-            webDriver.quit();
+        if (getDriver() != null) {
+            getDriver().quit();
         }
     }
 

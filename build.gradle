@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     id 'idea'
-
+    id 'io.qameta.allure' version '2.8.1'
     id 'io.franzbecker.gradle-lombok' version '3.2.0'
 }
 
@@ -14,9 +14,33 @@ repositories {
     mavenCentral()
 }
 
+
 test {
+    systemProperties System.getProperties()
+    testLogging {
+        events "PASSED", "FAILED", "SKIPPED"
+        exceptionFormat = "full"
+        showStandardStreams = true
+    }
+    test.outputs.upToDateWhen { false }
     useTestNG()
 }
+
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
+
+allure {
+    version = '2.13.1'
+    autoconfigure = true
+    aspectjVersion = '1.9.5'
+    downloadLinkFormat = 'https://dl.bintray.com/qameta/maven/io/qameta/allure/allure-commandline/%s/allure-commandline-%s.zip'
+
+    useTestNG{
+        version = '2.13.1'
+    }
+}
+
 
 dependencies {
     testCompile group: 'org.testng', name: 'testng', version: '6.14.3'
