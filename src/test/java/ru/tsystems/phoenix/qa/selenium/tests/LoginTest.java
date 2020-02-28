@@ -7,6 +7,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.annotations.Test;
 import ru.tsystems.phoenix.qa.selenium.AbstractBaseSeleniumTest;
 import ru.tsystems.phoenix.qa.selenium.Locators;
+import ru.tsystems.phoenix.qa.selenium.matcher.PhoenixMatchers;
 import ru.tsystems.phoenix.qa.selenium.page.BadLoginPage;
 import ru.yandex.qatools.htmlelements.matchers.WebElementMatchers;
 
@@ -14,6 +15,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.openqa.selenium.support.ui.ExpectedConditions.presenceOfElementLocated;
+import static org.testng.Assert.assertTrue;
 
 public class LoginTest extends AbstractBaseSeleniumTest {
     public static final String START_PAGE_URL = "https://intra.t-systems.ru/Dash";
@@ -44,15 +46,11 @@ public class LoginTest extends AbstractBaseSeleniumTest {
     @Test
     public void testLoginZZZZZZZZZZZZZZZZZZZ() {
         openDashboardPage();
-
         pause();
         checkLoginPageIsOpen();
-
         fillLoginForm(USERNAME);
         clickOnLoginButton();
-
         checkRedirectToDasboardPage();
-
         checkMegabyteCountIsGreatThan(100);
 
     }
@@ -77,18 +75,24 @@ public class LoginTest extends AbstractBaseSeleniumTest {
 
     @Step("Fill login form with username = {username} and some password")
     private void fillLoginForm(String username) {
-        onLoginPage().usernameInput().waitUntil(WebElementMatchers.exists()).sendKeys(username);
-        onLoginPage().passwordInput().should(WebElementMatchers.exists()).sendKeys(PASSWORD);
+        onLoginPage().usernameInput()
+                .waitUntil(WebElementMatchers.exists())
+                .sendKeys(username);
+        onLoginPage().passwordInput()
+                .check(WebElementMatchers.exists())
+                .check(PhoenixMatchers.hasCss("text-shadow", "11px"))
+                .sendKeys(PASSWORD);
     }
 
     @Step
     private void checkLoginPageIsOpen() {
         var title = onLoginPage().title().getText();
-        assertThat("Intra Login page is not open", title, is("Добро пожаловать в Intra"));
+        assertThat("Intra Login page is not open", title, is(containsStringIgnoringCase("Добро пожаловать в Intra")));
     }
 
     @Step
     private void openDashboardPage() {
         getDriver().get(START_PAGE_URL);
+
     }
 }

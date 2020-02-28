@@ -2,11 +2,14 @@ package ru.tsystems.phoenix.qa.selenium;
 
 import io.qameta.atlas.core.Atlas;
 import io.qameta.atlas.webdriver.WebDriverConfiguration;
+import lombok.val;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.asserts.SoftAssert;
+import ru.tsystems.phoenix.qa.selenium.atlas.CheckMethodExtension;
 import ru.tsystems.phoenix.qa.selenium.page.DashboardPage;
 import ru.tsystems.phoenix.qa.selenium.page.LoginPage;
 
@@ -21,6 +24,7 @@ public abstract class AbstractBaseSeleniumTest {
     protected Atlas atlas;
 
     private static final URL HUB_URL;
+    protected SoftAssert softAssert = new SoftAssert();
 
     // region test configuration
 
@@ -42,6 +46,7 @@ public abstract class AbstractBaseSeleniumTest {
         chromeOptions.addArguments("start-maximized");
         webDriver.set(new RemoteWebDriver(HUB_URL, chromeOptions));
         atlas = new Atlas(new WebDriverConfiguration(getDriver()));
+        atlas.extension(new CheckMethodExtension());
         getDriver().manage().timeouts().implicitlyWait(20, SECONDS);
         getDriver().manage().timeouts().pageLoadTimeout(60, SECONDS);
     }
@@ -51,6 +56,10 @@ public abstract class AbstractBaseSeleniumTest {
         if (getDriver() != null) {
             getDriver().quit();
         }
+        for (val errorMessage : CheckMethodExtension.errorsList.get()) {
+            softAssert.assertTrue(false, errorMessage);
+        }
+        softAssert.assertAll();
     }
 
     protected void pause() {
@@ -65,11 +74,11 @@ public abstract class AbstractBaseSeleniumTest {
     // region pages
 
     protected LoginPage onLoginPage() {
-        return atlas.create(webDriver, LoginPage.class);
+        return atlas.create(getDriver(), LoginPage.class);
     }
 
     protected DashboardPage onDashPage() {
-        return atlas.create(webDriver, DashboardPage.class);
+        return atlas.create(getDriver(), DashboardPage.class);
     }
 
     // endregion pages
